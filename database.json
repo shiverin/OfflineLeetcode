@@ -1,0 +1,26 @@
+{
+    "1": {
+        "title": "Two Sum",
+        "slug": "two_sum",
+        "difficulty": "Easy",
+        "description": "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to target.",
+        "function_name": "twoSum",
+        "test_cases": [
+            { "input": { "nums": [2,7,11,15], "target": 9 }, "output": [0,1] },
+            { "input": { "nums": [3,2,4], "target": 6 }, "output": [1,2] },
+            { "input": { "nums": [3,3], "target": 6 }, "output": [0,1] }
+        ]
+    },
+    "9": {
+        "title": "Palindrome Number",
+        "slug": "is_palindrome",
+        "difficulty": "Easy",
+        "description": "Given an integer x, return true if x is a palindrome, and false otherwise.",
+        "function_name": "isPalindrome",
+        "test_cases": [
+            { "input": { "x": 121 }, "output": true },
+            { "input": { "x": -121 }, "output": false },
+            { "input": { "x": 10 }, "output": false }
+        ]
+    }
+}
