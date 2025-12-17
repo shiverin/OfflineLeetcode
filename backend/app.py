@@ -4,7 +4,8 @@ from main import load_db, list_questions, generate_template
 from judge import Judge
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles  
-
+import os
+import uuid
 
 app = FastAPI()
 db = load_db()
@@ -12,7 +13,7 @@ runner = Judge(db)
 
 origins = [  
     "http://localhost:5173",   
-    "http://localhost:3000", 
+    "http://localhost:8000", 
 ]
 app.add_middleware(  
     CORSMiddleware,  
@@ -23,6 +24,11 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Ensure folder exists
+UPLOAD_DIR = "questions"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 
 # GET /api/questions → list all questions
 @app.get("/api/questions")
@@ -45,17 +51,16 @@ def generate(input: GenerateInput):
     generate_template(db, input.question_id)
     return {"status": "template generated"}
 
-# pydantic model  
-class RunInput(BaseModel):  
-    question_id: str  
-    code: str  # <-- Add this field  
-  
-# endpoint  
-@app.post("/api/questions/run")  
-def run(input: RunInput):  
-    # Now your runner can use the submitted code  
-    results = runner.run(input.question_id, input.code)  
-    return results # <-- Return the actual test results
+class RunCodeRequest(BaseModel):
+    question_id: str
+    code: str
+
+@app.post("/api/questions/run")
+async def run_code(input: RunCodeRequest):
+    runner = Judge(db)  # your database object
+    # Pass the code string directly to Judge
+    result = runner.run(input.question_id, user_code_str=input.code)
+    return result
 
 @app.get("/api/questions/{question_id}")  
 def get_question_details(question_id: str):  
