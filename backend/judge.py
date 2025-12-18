@@ -45,7 +45,7 @@ class Judge:
             return {"status": "error", "message": f"Question ID {question_id} not found."}  
     
         q_data = self.db[question_id]
-        func_name = to_camel_case(q_data['title'])
+        func_name = "solution"
     
         # --- THE CORRECTED STRING PROCESSING ---  
         
@@ -64,16 +64,33 @@ class Judge:
             f.write(full_code)  
     
         try:  
-            # This part of your logic is already correct  
-            spec = importlib.util.spec_from_file_location("solution", temp_file_path)  
-            user_module = importlib.util.module_from_spec(spec)  
-            spec.loader.exec_module(user_module)  
-            
-            if hasattr(user_module, 'Solution'):  
-                solution_instance = user_module.Solution()  
-                user_func = getattr(solution_instance, func_name)  
-            else:  
-                user_func = getattr(user_module, func_name)  
+            spec = importlib.util.spec_from_file_location("solution", temp_file_path)
+            user_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(user_module)
+
+            if hasattr(user_module, 'Solution'):
+                solution_instance = user_module.Solution()
+                # dynamically pick the first callable method that doesn't start with '_'
+                func_name = next(
+                    (name for name in dir(solution_instance)
+                    if callable(getattr(solution_instance, name)) and not name.startswith("_")),
+                    None
+                )
+                if not func_name:
+                    os.remove(temp_file_path)
+                    return {"status": "error", "message": "No callable method found in Solution class."}
+                user_func = getattr(solution_instance, func_name)
+            else:
+                # dynamically pick the first top-level function in the module
+                func_name = next(
+                    (name for name in dir(user_module)
+                    if callable(getattr(user_module, name)) and not name.startswith("_")),
+                    None
+                )
+                if not func_name:
+                    os.remove(temp_file_path)
+                    return {"status": "error", "message": "No top-level function found in module."}
+                user_func = getattr(user_module, func_name)
     
         except AttributeError:  
             os.remove(temp_file_path)  
@@ -87,7 +104,7 @@ class Judge:
           
         for idx, case in enumerate(q_data['test_cases']):  
             inputs_dict = case['input']  
-            
+
             expected_output = case['output']  
             case_result = {"id": idx + 1, "input": inputs_dict, "expected": expected_output}  
               
